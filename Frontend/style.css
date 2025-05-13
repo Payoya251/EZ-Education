@@ -68,7 +68,7 @@ img {
   margin: 0 auto 20px;
 }
 
-/* SIDEBAR */
+/* SIDEBAR - UPDATED SECTION */
 .sidebar {
   position: fixed;
   top: 0;
@@ -110,15 +110,20 @@ img {
 .sidebar nav ul li a {
   display: block;
   padding: 14px 20px;
-  color: #111;
+  color: #111 !important; /* Force dark text */
   font-weight: 500;
   transition: all 0.2s ease;
+  text-shadow: none !important; /* Ensure no text shadow */
+}
+
+.sidebar.show nav ul li a {
+  color: #111 !important; /* Force dark text when sidebar is open */
 }
 
 .sidebar nav ul li a:hover,
 .sidebar nav ul li a.active {
   background-color: #f2d060;
-  color: #000;
+  color: #000 !important; /* Force black text on hover/active */
   padding-left: 25px;
 }
 
@@ -237,18 +242,18 @@ textarea {
 }
 
 /* CARD STYLE BLOCK */
-.card {
+.feature-card {
   background: white;
   padding: 25px 30px;
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   max-width: 800px;
   margin: 30px auto;
-  text-align: left;
+  text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card:hover {
+.feature-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(0,0,0,0.1);
 }

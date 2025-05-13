@@ -3,8 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - SharpKidsTutoring</title>
+  <title>Login - SharpKidsTutoring</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0fdfc;
+      color: #264653;
+      padding: 40px;
+    }
+    .content {
+      max-width: 400px;
+      margin: 50px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .error-message {
+      color: #e63946;
+      margin-top: 10px;
+      display: none;
+    }
+    /* Keep all your existing styles */
+  </style>
 </head>
 <body>
   <button class="toggle-btn" id="toggle-btn">&#9776;</button>
@@ -17,10 +40,10 @@
       <ul>
         <li><a href="Homepage.html">Home</a></li>
         <li><a href="AboutUs.html">About Us</a></li>
+        <li><a href="login.html" class="active">Login</a></li>
         <li><a href="Appointment.html">Appointment</a></li>
         <li><a href="Blog.html">Blog</a></li>
         <li><a href="Services.html">Services</a></li>
-        <li><a href="Recruitment.html">Join as Tutor</a></li>
         <li><a href="ContactUs.html">Contact</a></li>
         <li><a href="PrivacyPolicy.html">Privacy Policy</a></li>
         <li><a href="FAQ.html">FAQ</a></li>
@@ -32,10 +55,9 @@
     <div class="page-logo">
       <img src="logo.png" alt="SharpKidsTutoring Logo">
     </div>
-    <h1>Login into your account</h1>
+    <h1>Login to your account</h1>
     <div class="card">
-      <form id="signupForm">
-
+      <form id="loginForm">
         <label for="email">Email Address *</label>
         <input type="email" id="email" name="email" required>
 
@@ -44,54 +66,55 @@
 
         <button type="submit" class="btn primary">Login</button>
       </form>
+      <div id="errorMessage" class="error-message"></div>
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+      Don't have an account? <a href="sign_up.html" style="color: #2a9d8f; text-decoration: none; font-weight: bold;">Sign up here</a>
     </div>
   </div>
+<script>
+        document.getElementById('loginForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-  <script>
-    document.getElementById('signupForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
+            const formData = new FormData(event.target);
+            const loginData = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
 
-      // Basic client-side validation
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-      
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-      }
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData),
+                });
 
-      const formData = new FormData(event.target);
-      const userData = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        password: formData.get('password'),
-        role: formData.get('role')
-      };
+                const result = await response.json();
+                const errorMessageDiv = document.getElementById('errorMessage');
 
-      try {
-        const response = await fetch('http://localhost:3000/api/users/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData),
+                if (response.ok) {
+                    localStorage.setItem('username', result.username); // Keep storing in localStorage for general use
+                    localStorage.setItem('userType', result.userType);
+
+                    if (result.userType === 'tutor') {
+                        sessionStorage.setItem('tutorUsername', result.username); // Store tutor username in sessionStorage
+                    } else if (result.userType === 'student') {
+                        sessionStorage.setItem('studentUsername', result.username); // Store student username in sessionStorage if needed
+                    }
+                    window.location.href = result.redirect;
+                } else {
+                    errorMessageDiv.textContent = result.message;
+                    errorMessageDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').textContent = 'Failed to connect to server';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
         });
-
-        const result = await response.json();
-        
-        if (response.ok) {
-          alert('Account created successfully!');
-          // Redirect to login or dashboard
-          window.location.href = 'Login.html';
-        } else {
-          alert(result.message || 'Error creating account');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to connect to server');
-      }
-    });
-  </script>
+    </script>
   <script src="script.js"></script>
 </body>
 </html>

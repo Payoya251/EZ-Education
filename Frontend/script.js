@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
   const toggleButton = document.getElementById('toggle-btn'); // Changed variable name to toggleButton
   const sidebar = document.getElementById('sidebar');
+  const darkModeToggle = document.getElementById("darkModeToggle");
+  const loginFormElement = document.getElementById('loginForm');
 
   if (toggleButton && sidebar) {
     toggleButton.addEventListener('click', () => {
@@ -43,23 +45,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.add("dark-mode");
   }
 
-  const toggleDarkMode = document.getElementById("darkModeToggle");
   if (toggleDarkMode) {
     toggleDarkMode.addEventListener("click", function () {
       document.body.classList.toggle("dark-mode");
       localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
     });
   }
-
-  // Fake form submission handler
-  const forms = document.querySelectorAll("form");
-  forms.forEach((form) => {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      alert("Form submitted!");
-      form.reset();
-      form.classList.add("submitted");
-      setTimeout(() => form.classList.remove("submitted"), 1000);
-    });
-  });
 });
