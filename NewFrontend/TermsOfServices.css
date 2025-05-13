@@ -1,0 +1,156 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff9e6;
+  color: #333;
+}
+
+.top-right-nav {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 15px;
+  z-index: 1000;
+}
+
+.top-right-nav a {
+  text-decoration: none;
+  font-weight: 500;
+  color: #000;
+  transition: color 0.3s ease;
+}
+
+.top-right-nav a:hover {
+  color: #00bfa6;
+}
+
+.hamburger {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 25px;
+  margin-left: 20px;
+  z-index: 1000;
+}
+
+.hamburger span {
+  background: black;
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.hamburger.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+
+.sidebar {
+  display: none;
+  flex-direction: column;
+  background-color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 240px;
+  padding-top: 60px;
+  overflow-y: auto;
+  z-index: 998;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.show {
+  display: flex;
+}
+
+.sidebar a {
+  padding: 15px 20px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.sidebar a i {
+  margin-right: 10px;
+  color: #007b83;
+  font-size: 1rem;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+  background-color: #d0f4ea;
+  color: #007b83;
+}
+
+.logo img {
+  display: block;
+  margin: 20px auto 10px;
+  width: 120px;
+}
+
+.hero {
+  text-align: center;
+  padding: 80px 20px 60px;
+  background-color: #f1c40f;
+  clip-path: ellipse(140% 100% at 50% 0%);
+  color: #000;
+}
+
+.hero-heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  font-size: 1rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+  .terms-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+  }
+  .terms-card {
+    background-color: #f5f7f6;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+  .terms-card h2 {
+    color: #007b83;
+    margin-bottom: 10px;
+  }
+  .terms-card p {
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  footer {
+    background-color: #f1c40f;
+    color: black;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 0.9rem;
+  }
+  

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book an Appointment | Sharp Kids Tutoring</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Raleway:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+
+  <!-- Sidebar Toggle -->
+  <button class="toggle-btn" id="toggle-btn">&#9776;</button>
+
+
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Sharp Kids Tutoring Logo">
+    </div>
+    <nav>
+      <ul>
+        <li><a href="Homepage.html">Home</a></li>
+        <li><a href="login.html">Login</a></li>
+        <li><a href="AboutUs.html">About Us</a></li>
+        <li><a href="Appointment.html" class="active">Appointment</a></li>
+        <li><a href="Blog.html">Blog</a></li>
+        <li><a href="Services.html">Services</a></li>
+        <li><a href="Recruitment.html">Join as Tutor</a></li>
+        <li><a href="ContactUs.html">Contact</a></li>
+        <li><a href="PrivacyPolicy.html">Privacy Policy</a></li>
+        <li><a href="FAQ.html">FAQ</a></li>
+      </ul>
+    </nav>
+  </div>
+
+
+  <!-- Main Content -->
+  <div class="content">
+    <div class="page-logo">
+      <img src="logo.png" alt="Sharp Kids Tutoring Logo">
+    </div>
+
+
+    <h1>Book an Appointment</h1>
+
+
+    <div class="card">
+      <p>Use the form below to request a free tutoring session. One of our coordinators will match your child with a tutor and follow up by email.</p>
+
+
+      <form id="appointment-form">
+        <label for="parentName">Parent/Guardian Name</label>
+        <input type="text" id="parentName" name="parentName" required>
+
+
+        <label for="studentName">Student Name</label>
+        <input type="text" id="studentName" name="studentName" required>
+
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required>
+
+
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" required>
+
+
+        <label for="datetime">Preferred Date & Time</label>
+        <input type="datetime-local" id="datetime" name="datetime" required>
+
+
+        <label for="notes">Any Notes or Concerns?</label>
+        <textarea id="notes" name="notes" placeholder="Let us know if you have any specific concerns or goals..."></textarea>
+
+
+        <button type="submit">Request Appointment</button>
+      </form>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+</html>

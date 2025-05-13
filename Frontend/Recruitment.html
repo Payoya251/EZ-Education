@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Join Us | Sharp Kids Tutoring</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <button class="toggle-btn" id="toggle-btn">&#9776;</button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <img src="logo.png" alt="Sharp Kids Tutoring Logo">
+    </div>
+    <nav>
+      <ul>
+        <li><a href="Homepage.html">Home</a></li>
+        <li><a href="AboutUs.html">About Us</a></li>
+        <li><a href="Appointment.html" class="active">Appointment</a></li>
+        <li><a href="Blog.html">Blog</a></li>
+        <li><a href="Services.html">Services</a></li>
+        <li><a href="Recruitment.html">Join as Tutor</a></li>
+        <li><a href="ContactUs.html">Contact</a></li>
+        <li><a href="PrivacyPolicy.html">Privacy Policy</a></li>
+        <li><a href="FAQ.html">FAQ</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="content">
+    <div class="page-logo"><img src="logo.png" alt="Logo" /></div>
+    <h1>Become a Volunteer Tutor ✏️</h1>
+    <p class="centered-text">
+      Help students succeed while gaining leadership, teaching, and communication experience. Join our Sharp Kids Tutoring team today!
+    </p>
+
+    <div class="card">
+      <form id="tutorApplicationForm">
+        <label for="name">Full Name *</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email">Email Address *</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="subject">Subjects You Can Tutor</label>
+        <input type="text" id="subject" name="subject" placeholder="e.g. Math, English, Science">
+
+        <label for="availability">Availability</label>
+        <input type="text" id="availability" name="availability" placeholder="Weekdays, Weekends, Time Zones">
+
+        <label for="message">Why do you want to join?</label>
+        <textarea id="message" name="message" placeholder="Tell us why you're passionate about tutoring!"></textarea>
+
+        <button type="submit" class="btn primary">Submit Application</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('tutorApplicationForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission
+
+      // 1. Get Form Data
+      const formData = new FormData(event.target);
+      const tutorData = {};
+      formData.forEach((value, key) => {
+        tutorData[key] = value;
+      });
+
+      // 2. Send Data to Backend
+      try {
+        const response = await fetch('/api/tutors', { // changed here
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tutorData),
+        });
+
+        // 3. Handle Response
+        const result = await response.json();
+        if (response.ok) {
+          alert(result.message); // Success message
+          event.target.reset(); // Clear form
+        } else {
+          alert('Error: ' + result.message); // Show error from server
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Failed to submit application. Please check your connection.');
+      }
+    });
+  </script>
+</body>
+</html>

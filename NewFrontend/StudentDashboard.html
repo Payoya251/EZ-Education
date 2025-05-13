@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard | Sharp Kids Tutoring</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="StudentDashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="header-bar">
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="top-right-nav">
+      <a href="ContactUs.html"><i class="fas fa-envelope"></i> Contact Us</a>
+      <a href="Login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+      <a href="Signup.html"><i class="fas fa-user-plus"></i> Sign Up</a>
+    </div>
+  </div>
+
+  <nav class="sidebar" id="sidebar">
+    <a href="Homepage.html"><i class="fas fa-home"></i> Home</a>
+    <a href="AboutUs.html"><i class="fas fa-users"></i> About Us</a>
+    <a href="Appointment.html"><i class="fas fa-calendar-check"></i> Appointments</a>
+    <a href="Services.html"><i class="fas fa-concierge-bell"></i> Services</a>
+    <a href="Blog.html"><i class="fas fa-pen-nib"></i> Blog</a>
+    <a href="FAQ.html"><i class="fas fa-question-circle"></i> FAQ</a>
+    <a href="Testimonials.html"><i class="fas fa-comment-dots"></i> Testimonials</a>
+    <a href="Recruitment.html"><i class="fas fa-user-plus"></i> Careers</a>
+    <a href="TutorDashboard.html" class="indent"><i class="fas fa-chalkboard-teacher"></i> Tutor Dashboard</a>
+    <a href="StudentDashboard.html" class="indent active"><i class="fas fa-graduation-cap"></i> Student Dashboard</a>
+    <a href="TutorLogin.html"><i class="fas fa-sign-in-alt"></i> Tutor Log In</a>
+    <a href="PrivacyPolicy.html"><i class="fas fa-sign-in-alt"></i> Privacy Policy</a>
+    <a href="TermsOfServices.html"><i class="fas fa-user-plus"></i> Terms Of Services</a>
+  </nav>
+
+  <section class="hero">
+    <img src="logo.png" alt="Sharp Kids Tutoring Logo" class="hero-logo" />
+    <h1 class="hero-heading">Student Dashboard</h1>
+    <p class="hero-subtext">View your upcoming sessions, homework, and progress!</p>
+  </section>
+
+  <section class="dashboard">
+    <div class="dashboard-card">
+      <h3>📅 Upcoming Sessions</h3>
+      <ul>
+        <li>Tuesday @ 3PM – Math with Mr. Patel</li>
+        <li>Thursday @ 4PM – Reading with Ms. Chen</li>
+      </ul>
+    </div>
+
+    <div class="dashboard-card">
+      <h3>📚 Homework Uploads</h3>
+      <p>Turn in your weekly assignments and worksheets here.</p>
+      <button>Upload Homework</button>
+    </div>
+
+    <div class="dashboard-card">
+      <h3>📈 My Progress</h3>
+      <p>Track how you're doing in each subject and read tutor feedback.</p>
+      <button>View Progress</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>© SharpKidsTutoring | Empowering young minds, one session at a time.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
