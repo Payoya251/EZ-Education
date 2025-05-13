@@ -13,7 +13,7 @@ html {
 
 body {
   font-family: 'Raleway', sans-serif;
-  background: linear-gradient(to bottom right, #fffce8, #ffffff);
+  background: #fff;
   color: #111;
   line-height: 1.6;
   min-height: 100vh;
@@ -27,19 +27,19 @@ body.sidebar-open {
 
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
-  color: #264653;
+  color: #000;
   margin-bottom: 20px;
   text-align: center;
 }
 
 a {
-  color: #007b83;
+  color: #000;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: #005e61;
+  color: #444;
   text-decoration: underline;
 }
 
@@ -47,11 +47,16 @@ a:hover {
 img {
   max-width: 100%;
   height: auto;
+  filter: grayscale(20%);
 }
 
 .page-logo {
   text-align: center;
   margin: 30px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 0;
+  border: 1px solid #eee;
 }
 
 .page-logo img {
@@ -68,14 +73,14 @@ img {
   margin: 0 auto 20px;
 }
 
-/* SIDEBAR - UPDATED SECTION */
+/* SIDEBAR */
 .sidebar {
   position: fixed;
   top: 0;
   left: -250px;
   width: 250px;
   height: 100vh;
-  background-color: #ffffff;
+  background: #000;
   border-right: 3px solid #f2d060;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
   transition: left 0.3s ease;
@@ -92,6 +97,7 @@ img {
   text-align: center;
   margin-bottom: 30px;
   padding: 0 20px;
+  color: #fff;
 }
 
 .sidebar nav ul {
@@ -110,21 +116,21 @@ img {
 .sidebar nav ul li a {
   display: block;
   padding: 14px 20px;
-  color: #111 !important; /* Force dark text */
+  color: #fff !important;
   font-weight: 500;
-  transition: all 0.2s ease;
-  text-shadow: none !important; /* Ensure no text shadow */
+  background: transparent;
+  border-left: 3px solid transparent;
+  transition: background 0.2s, color 0.2s, border 0.2s;
 }
 
-.sidebar.show nav ul li a {
-  color: #111 !important; /* Force dark text when sidebar is open */
-}
-
-.sidebar nav ul li a:hover,
 .sidebar nav ul li a.active {
-  background-color: #f2d060;
-  color: #000 !important; /* Force black text on hover/active */
-  padding-left: 25px;
+  background: #fff;
+  color: #000 !important;
+}
+
+.sidebar nav ul li a:hover:not(.active) {
+  /*background: #fff;*/
+  color: #000;
 }
 
 /* TOGGLE BUTTON */
@@ -133,7 +139,8 @@ img {
   top: 15px;
   left: 15px;
   font-size: 24px;
-  background-color: #f2d060;
+  background-color: #000;
+  color: #fff;
   border: none;
   padding: 10px 15px;
   border-radius: 6px;
@@ -143,7 +150,8 @@ img {
 }
 
 .toggle-btn:hover {
-  background-color: #e2bd48;
+  background-color: #333;
+  color: #fff;
   transform: scale(1.05);
 }
 
@@ -168,36 +176,37 @@ img {
 }
 
 .btn {
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1rem;
-  transition: all 0.3s ease;
   display: inline-block;
-  text-align: center;
-  cursor: pointer;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
   border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  margin: 8px 0;
 }
 
 .btn.primary {
-  background-color: #007b83;
-  color: white;
+  background: #000;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
 
 .btn.primary:hover {
-  background-color: #005e61;
-  transform: translateY(-2px);
+  background: #333;
+  color: #fff;
 }
 
 .btn.secondary {
-  background-color: #f2d060;
-  color: #000;
+  background: #fff;
+  color: #111;
+  border: 1px solid #111;
 }
 
 .btn.secondary:hover {
-  background-color: #e2bd48;
-  transform: translateY(-2px);
+  background: #eee;
+  color: #000;
 }
 
 /* CENTERED TEXT */

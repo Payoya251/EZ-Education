@@ -12,14 +12,15 @@
       padding: 0;
       display: flex;
       min-height: 100vh;
-      background-color: #f5f7fa;
+      background: #fff;
+      color: #111;
     }
 
     /* Sidebar Styles */
     .sidebar {
       width: 250px;
-      background-color: #2c3e50;
-      color: white;
+      background-color: #111;
+      color: #fff;
       padding: 20px;
       position: fixed;
       height: 100vh;
@@ -69,7 +70,7 @@
     }
 
     nav ul li a {
-      color: white;
+      color: #fff;
       text-decoration: none;
       font-size: 16px;
       display: block;
@@ -79,7 +80,8 @@
     }
 
     nav ul li a:hover {
-      background-color: #34495e;
+      background-color: #222;
+      color: #fff;
     }
 
     /* Content Styles */
@@ -88,6 +90,9 @@
       padding: 30px;
       transition: margin-left 0.3s;
       width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
     }
 
     .content.shifted {
@@ -271,7 +276,7 @@
     }
 
     #tutor-experience {
-      color: #8e44ad;
+      color: #222;
     }
   </style>
 </head>
@@ -294,7 +299,6 @@
   <div class="content" id="content">
     <div class="page-logo"><img src="logo.png" alt="Logo" /></div>
     <h1 id="welcome-message">Welcome, User!</h1>
-    <p>Student ID: SKT20458</p>
 
     <div class="calendar-container">
       <div class="calendar-header">
