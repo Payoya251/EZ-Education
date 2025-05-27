@@ -332,11 +332,6 @@
       <button>Submit</button>
     </div>
 
-    <div class="card">
-      <h3>Payment Status</h3>
-      <p>Status: Paid through April</p>
-      <button>Make Payment</button>
-    </div>
 
     <div class="card">
       <h3>Your Progress</h3>
@@ -350,11 +345,78 @@
       <h3>Assigned Tutor</h3>
       <div id="tutor-info">
         <p id="tutor-name">Loading tutor information...</p>
-        <p id="tutor-contact"></p>
-        <p id="tutor-subjects"></p>
-        <p id="tutor-experience"></p>
+        <p id="tutor-username"></p>
+        <p id="tutor-contact">Contact information will be available soon.</p>
       </div>
     </div>
+    
+    <script>
+      // Fetch and display assigned tutor
+      async function fetchAssignedTutor() {
+        const studentUsername = localStorage.getItem('username');
+        if (!studentUsername) {
+          console.error('No username found in localStorage');
+          document.getElementById('tutor-name').textContent = 'Please log in to see your tutor';
+          return;
+        }
+
+        try {
+          console.log('Fetching tutor for student:', studentUsername);
+          const apiUrl = `/api/assigned-tutor/${studentUsername}`;
+          console.log('API URL:', apiUrl);
+          
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Important for cookies/sessions if using them
+          });
+          
+          console.log('Response status:', response.status);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response error:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+          }
+          
+          const data = await response.json();
+          console.log('Tutor data received:', data);
+          
+          const tutorNameElement = document.getElementById('tutor-name');
+          const tutorUsernameElement = document.getElementById('tutor-username');
+          
+          if (data.tutorName || data.tutorUsername) {
+            const displayName = data.tutorName || data.tutorUsername;
+            tutorNameElement.textContent = `Tutor: ${displayName}`;
+            if (data.tutorUsername) {
+              tutorUsernameElement.textContent = `Username: ${data.tutorUsername}`;
+            }
+          } else if (data.message) {
+            if (data.message === 'No tutor assigned' || data.message === 'Tutor not found') {
+              tutorNameElement.textContent = 'No tutor has been assigned to you yet.';
+              tutorNameElement.style.color = '#666';
+              tutorNameElement.style.fontStyle = 'italic';
+              if (tutorUsernameElement) {
+                tutorUsernameElement.textContent = 'Please check back later or contact support.';
+              }
+            } else {
+              tutorNameElement.textContent = data.message;
+            }
+          } else {
+            tutorNameElement.textContent = 'No tutor information available';
+          }
+        } catch (error) {
+          console.error('Error fetching tutor:', error);
+          document.getElementById('tutor-name').textContent = 'Error loading tutor information. Please try again later.';
+          console.log('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        }
+      }
+
+      // Call the function when the page loads
+      document.addEventListener('DOMContentLoaded', fetchAssignedTutor);
+    </script>
   </div>
 
   <script>

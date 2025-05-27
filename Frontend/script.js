@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const toggleButton = document.getElementById('toggle-btn'); // Changed variable name to toggleButton
+  // Sidebar and toggle button functionality
+  const toggleButton = document.getElementById('toggle-btn');
   const sidebar = document.getElementById('sidebar');
   const darkModeToggle = document.getElementById("darkModeToggle");
   const loginFormElement = document.getElementById('loginForm');
@@ -39,14 +40,43 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Dark mode support (if used)
+  // Form handling
+  const contactForm = document.getElementById('contact-form');
+  if (contactForm) {
+    contactForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      alert("Thanks for reaching out! We'll get back to you soon.");
+      contactForm.reset();
+    });
+  }
+
+  // Signup form handling
+  const signupForm = document.getElementById('signup-form');
+  if (signupForm) {
+    signupForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      alert("Account created successfully!");
+      signupForm.reset();
+    });
+  }
+
+  // Login form handling
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      // Login logic will be handled by the form's action
+    });
+  }
+
+  // Dark mode support
   const prefersDark = localStorage.getItem("darkMode") === "enabled";
   if (prefersDark) {
     document.body.classList.add("dark-mode");
   }
 
-  if (toggleDarkMode) {
-    toggleDarkMode.addEventListener("click", function () {
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener("click", function () {
       document.body.classList.toggle("dark-mode");
       localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "enabled" : "disabled");
     });
