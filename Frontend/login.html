@@ -85,19 +85,80 @@
                     body: JSON.stringify(loginData),
                 });
 
-                const result = await response.json();
+                let result;
+                try {
+                    const responseText = await response.text();
+                    console.log('Raw server response:', responseText);
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Error parsing JSON response:', e);
+                    throw new Error('Invalid server response');
+                }
+                
                 const errorMessageDiv = document.getElementById('errorMessage');
+                
+                console.log('Login response:', result);
+                console.log('Response status:', response.status);
 
-                if (response.ok) {
-                    localStorage.setItem('username', result.username); // Keep storing in localStorage for general use
-                    localStorage.setItem('userType', result.userType);
-
-                    if (result.userType === 'tutor') {
-                        sessionStorage.setItem('tutorUsername', result.username); // Store tutor username in sessionStorage
-                    } else if (result.userType === 'student') {
-                        sessionStorage.setItem('studentUsername', result.username); // Store student username in sessionStorage if needed
+                if (response.ok && result) {
+                    console.log('Login successful, setting user data');
+                    console.log('Full response:', JSON.stringify(result, null, 2));
+                    
+                    // Extract user data from the response
+                    const userData = result.user || {};
+                    const username = userData.username || result.username;
+                    const role = userData.role || result.role;
+                    
+                    if (!username || !role) {
+                        throw new Error('Missing username or role in response');
                     }
-                    window.location.href = result.redirect;
+                    
+                    // Store user data in localStorage and sessionStorage
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userType', role);
+                    
+                    // Store the token in sessionStorage
+                    if (result.token) {
+                        sessionStorage.setItem('token', result.token);
+                        console.log('JWT token stored in sessionStorage');
+                    } else {
+                        console.warn('No token received in login response');
+                    }
+                    
+                    console.log('Storage after login:', {
+                        localStorage: {
+                            username: localStorage.getItem('username'),
+                            userType: localStorage.getItem('userType')
+                        },
+                        sessionStorage: {
+                            token: sessionStorage.getItem('token') ? 'Present' : 'Missing',
+                            tutorUsername: sessionStorage.getItem('tutorUsername')
+                        }
+                    });
+
+                    // Set role-specific storage
+                    if (role === 'tutor') {
+                        console.log('User is a tutor, setting tutorUsername in sessionStorage');
+                        sessionStorage.setItem('tutorUsername', username);
+                        
+                        // Ensure we have a valid redirect URL
+                        const redirectUrl = result.redirect || '/tutor_dashboard.html';
+                        console.log('Redirecting to tutor dashboard:', redirectUrl);
+                        window.location.href = redirectUrl;
+                        
+                    } else if (role === 'student') {
+                        console.log('User is a student, setting studentUsername in sessionStorage');
+                        sessionStorage.setItem('studentUsername', username);
+                        
+                        // Ensure we have a valid redirect URL
+                        const redirectUrl = result.redirect || '/student_dashboard.html';
+                        console.log('Redirecting to student dashboard:', redirectUrl);
+                        window.location.href = redirectUrl;
+                    } else {
+                        console.error('Unknown user role:', result.role);
+                        errorMessageDiv.textContent = 'Unknown user role';
+                        errorMessageDiv.style.display = 'block';
+                    }
                 } else {
                     errorMessageDiv.textContent = result.message;
                     errorMessageDiv.style.display = 'block';

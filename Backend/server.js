@@ -19,16 +19,33 @@ if (!uri) {
 
 // Middleware
 app.use(cors());
+
 // Log all incoming requests
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
     next();
 });
 
-// Update the static file path to point to the correct location
+// Parse JSON bodies (built-in middleware)
+app.use(express.json());
+
+// Parse URL-encoded bodies (for form submissions)
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the Frontend directory
 app.use(express.static(path.join(__dirname, '../Frontend')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+
+// Error handling for JSON parsing
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        console.error('JSON Parse Error:', err);
+        return res.status(400).json({ 
+            message: 'Invalid JSON in request body',
+            code: 'INVALID_JSON'
+        });
+    }
+    next();
+});
 
 // Mongo Client
 const client = new MongoClient(uri, {
@@ -249,127 +266,174 @@ app.post('/api/tutors', async (req, res) => {
 });
 
 // Enroll a student with a tutor
-app.post('/api/enroll', async (req, res) => {
-    const { tutorId, studentUsername } = req.body;
+app.post('/api/enroll', express.json(), async (req, res) => {
+    console.log('\n=== New Enrollment Request ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Method:', req.method);
+    console.log('URL:', req.originalUrl);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Raw request body:', req.body);
     
-    if (!tutorId || !studentUsername) {
-        return res.status(400).json({ 
-            message: 'Tutor ID and student username are required',
-            code: 'MISSING_FIELDS'
+    // Parse the request body - only need studentUsername now
+    const { studentUsername } = req.body || {};
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.split(' ')[1]; // Get token from Authorization header
+    
+    console.log('Auth token:', token ? 'Present' : 'Missing');
+    
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required',
+            code: 'UNAUTHORIZED'
         });
     }
     
+    if (!studentUsername) {
+        return res.status(400).json({
+            success: false,
+            message: 'Student username is required',
+            code: 'MISSING_STUDENT_USERNAME'
+        });
+    }
+    
+    // Get tutor from token
+    let tutor;
     try {
-        // Start a session for transaction
-        const session = client.startSession();
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        tutor = await db.collection('users').findOne({ 
+            _id: new ObjectId(decoded.userId),
+            role: 'tutor' 
+        });
+        
+        if (!tutor) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only tutors can enroll students',
+                code: 'FORBIDDEN'
+            });
+        }
+        
+        console.log('Authenticated tutor:', {
+            id: tutor._id,
+            username: tutor.username,
+            name: tutor.name
+        });
+    } catch (error) {
+        console.error('Token verification failed:', error);
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid or expired token',
+            code: 'INVALID_TOKEN'
+        });
+    }
+
+    const session = client.startSession();
+    
+    try {
         let result;
         
-        try {
-            // Start transaction
-            await session.withTransaction(async () => {
-                // 1. Verify tutor exists and is a tutor
-                const tutor = await db.collection('users').findOne(
-                    { _id: new ObjectId(tutorId), role: 'tutor' },
-                    { session }
-                );
-                
-                if (!tutor) {
-                    throw { status: 404, code: 'TUTOR_NOT_FOUND', message: 'Tutor not found' };
-                }
-                
-                // 2. Verify student exists and is a student
-                const student = await db.collection('users').findOne(
-                    { username: studentUsername, role: 'student' },
-                    { session }
-                );
-                
-                if (!student) {
-                    throw { status: 404, code: 'STUDENT_NOT_FOUND', message: 'Student not found' };
-                }
-                
-                // 3. Check if student already has a tutor
-                if (student.tutorId) {
-                    throw { 
-                        status: 400, 
-                        code: 'ALREADY_ENROLLED', 
-                        message: 'Student is already enrolled with a tutor' 
-                    };
-                }
-                
-                // 4. Update student with tutor reference
-                await db.collection('users').updateOne(
-                    { _id: student._id },
-                    { $set: { tutorId: new ObjectId(tutorId) } },
-                    { session }
-                );
-                
-                // 5. Add student to tutor's students array if not already there
-                if (!tutor.students || !tutor.students.includes(studentUsername)) {
-                    await db.collection('users').updateOne(
-                        { _id: tutor._id },
-                        { $addToSet: { students: studentUsername } },
-                        { session }
-                    );
-                }
-                
-                // 6. Create enrollment record (for backward compatibility)
-                await db.collection('enrollments').updateOne(
-                    { 
-                        tutorUsername: tutor.username,
-                        studentUsername: student.username
-                    },
-                    {
-                        $setOnInsert: {
-                            tutorId: tutor._id,
-                            studentId: student._id,
-                            enrollmentDate: new Date()
-                        }
-                    },
-                    { 
-                        upsert: true,
-                        session 
-                    }
-                );
-                
-                result = {
-                    tutorId: tutor._id,
-                    tutorUsername: tutor.username,
-                    tutorName: tutor.name,
-                    studentId: student._id,
-                    studentUsername: student.username,
-                    studentName: student.name,
-                    enrollmentDate: new Date()
+        await session.withTransaction(async () => {
+            // 1. Verify tutor exists and is a tutor
+            const tutor = await db.collection('users').findOne(
+                { username: tutorUsername, role: 'tutor' },
+                { session }
+            );
+
+            if (!tutor) {
+                throw { 
+                    status: 404, 
+                    message: 'Tutor not found',
+                    code: 'TUTOR_NOT_FOUND'
                 };
-            });
-            
-            // If we get here, the transaction was successful
-            res.status(201).json({
-                message: 'Enrollment successful',
-                ...result
-            });
-            
-        } finally {
-            // End the session
-            await session.endSession();
-        }
-        
+            }
+
+            // 2. Verify student exists and is a student
+            const student = await db.collection('users').findOne(
+                { username: studentUsername, role: 'student' },
+                { session }
+            );
+
+            if (!student) {
+                throw { 
+                    status: 404, 
+                    message: 'Student not found',
+                    code: 'STUDENT_NOT_FOUND'
+                };
+            }
+
+
+            // 3. Check if student is already enrolled with another tutor
+            if (student.tutorId && student.tutorId.toString() !== tutor._id.toString()) {
+                throw { 
+                    status: 400, 
+                    message: 'Student is already enrolled with another tutor',
+                    code: 'STUDENT_ALREADY_ENROLLED'
+                };
+            }
+
+            // 4. Update student's tutor reference
+            await db.collection('users').updateOne(
+                { _id: student._id },
+                { $set: { tutorId: tutor._id } },
+                { session }
+            );
+
+            // 5. Add student to tutor's students array if not already present
+            if (!tutor.students || !tutor.students.some(s => s && s.toString() === student._id.toString())) {
+                await db.collection('users').updateOne(
+                    { _id: tutor._id },
+                    { $addToSet: { students: student._id } },
+                    { session }
+                );
+            }
+
+            // 6. Create enrollment record (for backward compatibility)
+            await db.collection('enrollments').updateOne(
+                { 
+                    tutorUsername: tutor.username,
+                    studentUsername: student.username
+                },
+                {
+                    $setOnInsert: {
+                        tutorId: tutor._id,
+                        studentId: student._id,
+                        enrollmentDate: new Date()
+                    }
+                },
+                { 
+                    upsert: true,
+                    session 
+                }
+            );
+
+            result = {
+                tutorId: tutor._id,
+                tutorUsername: tutor.username,
+                studentId: student._id,
+                studentUsername: student.username,
+                enrollmentDate: new Date()
+            };
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Student enrolled successfully',
+            ...result
+        });
     } catch (error) {
         console.error('Enrollment error:', error);
+        const status = error.status || 500;
+        const message = error.message || 'Error enrolling student';
+        const code = error.code || 'ENROLLMENT_ERROR';
         
-        // Handle custom errors from transaction
-        if (error.status) {
-            return res.status(error.status).json({
-                message: error.message,
-                code: error.code
-            });
-        }
-        
-        // Handle other errors
-        res.status(500).json({
-            message: 'Server error during enrollment',
-            code: 'SERVER_ERROR',
-            error: error.message
+        res.status(status).json({
+            success: false,
+            message,
+            code
         });
+    } finally {
+        await session.endSession();
     }
 });
 
@@ -449,6 +513,9 @@ app.get('/api/assigned-tutor/:studentUsername', async (req, res) => {
     }
 });
 
+// Import jsonwebtoken at the top of the file with other requires
+const jwt = require('jsonwebtoken');
+
 // Login endpoint for both students and tutors
 app.post('/api/login', async (req, res) => {
     console.log('\n=== Login Attempt ===');
@@ -456,6 +523,15 @@ app.post('/api/login', async (req, res) => {
     console.log('Role being logged in as:', req.body.role || 'Not specified');
     
     const { username, password } = req.body;
+    
+    // Check if JWT_SECRET is set
+    if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not set in environment variables');
+        return res.status(500).json({
+            message: 'Server configuration error',
+            code: 'SERVER_ERROR'
+        });
+    }
 
     try {
         // Find user by username
@@ -506,26 +582,44 @@ app.post('/api/login', async (req, res) => {
             createdAt: user.createdAt
         };
 
-        // Add role-specific data
+        // Add role-specific data and ensure redirect URL is included
         if (user.role === 'tutor') {
             userData.subject = user.subject;
             userData.availability = user.availability;
             userData.students = user.students || [];
-        } else if (user.role === 'student' && user.tutorId) {
-            // For students, include tutor info if assigned
-            const tutor = await db.collection('users').findOne(
-                { _id: new ObjectId(user.tutorId) },
-                { projection: { name: 1, username: 1, subject: 1 } }
-            );
-            if (tutor) {
-                userData.tutor = tutor;
+            userData.redirect = '/tutor_dashboard.html';
+        } else if (user.role === 'student') {
+            userData.redirect = '/student_dashboard.html';
+            // Include tutor info if assigned
+            if (user.tutorId) {
+                const tutor = await db.collection('users').findOne(
+                    { _id: new ObjectId(user.tutorId) },
+                    { projection: { name: 1, username: 1, subject: 1 } }
+                );
+                if (tutor) {
+                    userData.tutor = tutor;
+                }
             }
         }
 
+        // Generate JWT token
+        const token = jwt.sign(
+            { 
+                userId: user._id.toString(),
+                username: user.username,
+                role: user.role 
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' } // Token expires in 24 hours
+        );
+        
+        console.log('Generated JWT token for user:', user.username);
+        
         res.json({ 
             message: 'Login successful',
             redirect: redirectUrl,
-            user: userData
+            user: userData,
+            token: token // Include the token in the response
         });
 
     } catch (error) {
@@ -533,6 +627,48 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ 
             message: 'Server error during login',
             code: 'SERVER_ERROR'
+        });
+    }
+});
+
+// Get enrolled students for a tutor
+app.get('/api/tutor-students/:tutorUsername', async (req, res) => {
+    try {
+        const { tutorUsername } = req.params;
+        
+        if (!tutorUsername) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Tutor username is required' 
+            });
+        }
+
+        // Find the tutor by username
+        const tutor = await db.collection('users').findOne(
+            { 
+                username: tutorUsername,
+                role: 'tutor' 
+            },
+            { projection: { students: 1 } }
+        );
+
+        if (!tutor) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Tutor not found' 
+            });
+        }
+
+        res.json({ 
+            success: true,
+            students: tutor.students || [] 
+        });
+
+    } catch (error) {
+        console.error('Error fetching tutor students:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Server error while fetching students' 
         });
     }
 });

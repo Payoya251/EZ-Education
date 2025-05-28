@@ -43,7 +43,22 @@
       <input type="text" id="username" name="username" required>
 
       <label for="password">Password *</label>
-      <input type="password" id="password" name="password" required>
+      <input type="password" id="password" name="password" required minlength="8">
+
+      <label for="role">I am a *</label>
+      <select id="role" name="role" required>
+        <option value="">Select your role</option>
+        <option value="student">Student</option>
+        <option value="tutor">Tutor</option>
+      </select>
+
+      <div id="tutorFields" style="display: none;">
+        <label for="subject">Subject (for tutors)</label>
+        <input type="text" id="subject" name="subject">
+        
+        <label for="availability">Availability (for tutors)</label>
+        <input type="text" id="availability" name="availability" placeholder="e.g., Weekdays after 3pm">
+      </div>
 
       <button type="submit" class="btn primary">Sign Up</button>
     </form>
@@ -55,6 +70,16 @@
 
   <script src="script.js"></script>
   <script>
+    // Show/hide tutor fields based on role selection
+    document.getElementById('role').addEventListener('change', function() {
+      const tutorFields = document.getElementById('tutorFields');
+      if (this.value === 'tutor') {
+        tutorFields.style.display = 'block';
+      } else {
+        tutorFields.style.display = 'none';
+      }
+    });
+
     document.getElementById('signupForm').addEventListener('submit', async (event) => {
       event.preventDefault(); // Prevent default form submission
 

@@ -453,6 +453,43 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Debug: Log all storage items
+        console.log('LocalStorage contents:', JSON.stringify(localStorage, null, 2));
+        console.log('SessionStorage contents:', JSON.stringify(sessionStorage, null, 2));
+        
+        // Check if user is logged in and is a tutor
+        const username = localStorage.getItem('username');
+        const userType = localStorage.getItem('userType');
+        const tutorUsername = sessionStorage.getItem('tutorUsername');
+        
+        console.log('Auth check:', { username, userType, tutorUsername });
+        
+        // If we have a tutor username in sessionStorage but not in localStorage, sync them
+        if (tutorUsername && (!username || !userType)) {
+            console.log('Found tutor in sessionStorage, syncing to localStorage');
+            localStorage.setItem('username', tutorUsername);
+            localStorage.setItem('userType', 'tutor');
+            window.location.reload();
+            return;
+        }
+        
+        // If we don't have the required auth info, redirect to login
+        if (!username || userType !== 'tutor') {
+            console.log('Not authenticated as tutor, redirecting to login');
+            // Clear any partial auth data
+            localStorage.removeItem('username');
+            localStorage.removeItem('userType');
+            sessionStorage.removeItem('tutorUsername');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // If we get here, we're properly authenticated as a tutor
+        console.log('Authenticated as tutor:', username);
+        
+        // Store tutor username in sessionStorage for compatibility
+        sessionStorage.setItem('tutorUsername', username);
+        
         // DOM Elements
         const toggleButton = document.getElementById('toggle-btn');
         const sidebar = document.getElementById('sidebar');
@@ -465,6 +502,12 @@
         
         // Data
         let enrolledStudents = [];
+        
+        // Display username in the dashboard
+        const welcomeHeader = document.querySelector('h1');
+        if (welcomeHeader) {
+            welcomeHeader.textContent = `Welcome, ${username}!`;
+        }
 
         // Sidebar toggle functionality
         if (toggleButton && sidebar) {
@@ -644,6 +687,19 @@
             e.preventDefault();
             const studentUsername = studentUsernameInput.value.trim();
             const tutorUsername = sessionStorage.getItem('tutorUsername');
+            
+            // Debug: Log all session storage items
+            console.log('Session Storage at time of enrollment:');
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                console.log(`${key}:`, sessionStorage.getItem(key));
+            }
+            
+            console.log('Attempting enrollment with:', {
+                tutorUsername,
+                studentUsername,
+                timestamp: new Date().toISOString()
+            });
 
             // Clear previous messages
             enrollMessage.textContent = '';
@@ -655,24 +711,26 @@
                 return;
             }
 
-            if (tutorUsername) {
-                fetch('/api/enroll-student', {
+            const token = sessionStorage.getItem('token');
+            if (token) {
+                console.log('Sending enrollment request for student:', studentUsername);
+                fetch('/api/enroll', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ 
-                        tutorUsername: tutorUsername, 
                         studentUsername: studentUsername 
                     }),
                 })
-                .then(response => {
+                .then(async response => {
+                    const responseData = await response.json().catch(() => ({}));
+                    console.log('Enrollment response:', { status: response.status, responseData });
                     if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.message || 'Error al inscribir al estudiante');
-                        });
+                        throw new Error(responseData.message || 'Error al inscribir al estudiante');
                     }
-                    return response.json();
+                    return responseData;
                 })
                 .then(data => {
                     if (data.success) {
@@ -691,7 +749,12 @@
                     enrollMessage.className = 'error-message';
                 });
             } else {
-                window.location.href = 'login.html';
+                console.error('No authentication token found');
+                enrollMessage.textContent = 'Authentication required. Please log in again.';
+                enrollMessage.className = 'error-message';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
             }
         });
 
