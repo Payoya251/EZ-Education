@@ -6,6 +6,7 @@
   <title>Contact Us - EZ-Education</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Raleway:wght@400;500&display=swap" rel="stylesheet">
+  <script src="script.js" defer></script>
   <style>
     .contact-container {
       max-width: 800px;
@@ -168,75 +169,78 @@
   </div>
 
   <script>
-    // Toggle sidebar
-    document.getElementById('toggle-btn').addEventListener('click', function() {
-      document.body.classList.toggle('sidebar-open');
-      document.getElementById('sidebar').classList.toggle('show');
-    });
-
     // Handle form submission
-    document.getElementById('contactForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+    document.addEventListener('DOMContentLoaded', function() {
+      // Menu toggle is handled by script.js
       
-      const form = e.target;
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const successMessage = document.getElementById('successMessage');
-      
-      // Disable submit button to prevent multiple submissions
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending...';
-      
-      try {
-        const formData = {
-          name: form.name.value,
-          email: form.email.value,
-          subject: form.subject.value,
-          message: form.message.value
-        };
-        
-        // Use the full URL in development, adjust if needed for production
-        const response = await fetch('http://localhost:3000/api/contact', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(result.message || 'Failed to send message');
-        }
-        
-        // Show success message
-        successMessage.textContent = result.message || 'Thank you for your message! We will get back to you soon.';
-        successMessage.style.display = 'block';
-        successMessage.style.backgroundColor = '#d4edda';
-        successMessage.style.color = '#155724';
-        
-        // Reset form
-        form.reset();
-        
-      } catch (error) {
-        console.error('Error:', error);
-        successMessage.textContent = error.message || 'An error occurred while sending your message. Please try again.';
-        successMessage.style.display = 'block';
-        successMessage.style.backgroundColor = '#f8d7da';
-        successMessage.style.color = '#721c24';
-      } finally {
-        // Re-enable submit button
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Send Message';
-        
-        // Hide success/error message after 5 seconds
-        setTimeout(() => {
-          successMessage.style.display = 'none';
-        }, 5000);
+      // Form submission
+      const contactForm = document.getElementById('contactForm');
+      if (!contactForm) {
+        console.error('Contact form not found');
+        return;
       }
+      
+      contactForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const successMessage = document.getElementById('successMessage');
+        
+        // Disable submit button to prevent multiple submissions
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+        
+        try {
+          const formData = {
+            name: form.name.value,
+            email: form.email.value,
+            subject: form.subject.value,
+            message: form.message.value
+          };
+          
+          // Use the full URL in development, adjust if needed for production
+          const response = await fetch('http://localhost:3000/api/contact', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.message || 'Failed to send message');
+          }
+          
+          // Show success message
+          successMessage.textContent = result.message || 'Thank you for your message! We will get back to you soon.';
+          successMessage.style.display = 'block';
+          successMessage.style.backgroundColor = '#d4edda';
+          successMessage.style.color = '#155724';
+          
+          // Reset form
+          form.reset();
+          
+        } catch (error) {
+          console.error('Error:', error);
+          successMessage.textContent = error.message || 'An error occurred while sending your message. Please try again.';
+          successMessage.style.display = 'block';
+          successMessage.style.backgroundColor = '#f8d7da';
+          successMessage.style.color = '#721c24';
+        } finally {
+          // Re-enable submit button
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send Message';
+          
+          // Hide success/error message after 5 seconds
+          setTimeout(() => {
+            successMessage.style.display = 'none';
+          }, 5000);
+        }
+      });
     });
   </script>
-  
-  <script src="script.js"></script>
 </body>
 </html>

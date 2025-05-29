@@ -124,30 +124,68 @@ async function connectToMongoDB() {
 // Initialize MongoDB connection
 connectToMongoDB();
 
-// API routes
+// Contact form submission endpoint
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    
+    // Basic validation
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required' 
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please enter a valid email address' 
+      });
+    }
+    
+    // Save the contact form data to MongoDB
+    const contact = {
+      name,
+      email,
+      subject,
+      message,
+      createdAt: new Date(),
+      status: 'new'
+    };
+    
+    // Insert the contact into the 'contact' collection
+    const result = await db.collection('contact').insertOne(contact);
+    console.log(`New contact form submission from: ${name} (${email})`, result);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Thank you for your message! We will get back to you soon.'
+    });
+    
+  } catch (error) {
+    console.error('Error processing contact form:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while processing your message. Please try again later.'
+    });
+  }
+});
+
+// Login endpoint
 app.post('/api/login', async (req, res) => {
   console.log('\n=== Login Request ===');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
   console.log('Body:', JSON.stringify(req.body, null, 2));
   
+  const { username, password } = req.body;
+  
   try {
-    const { username, password } = req.body;
+    console.log(`Login attempt for username: ${username}`);
     
-    console.log('Login attempt for username:', username);
-    
-    if (!username || !password) {
-      console.log('Missing username or password');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Username and password are required' 
-      });
-    }
-
     console.log('Looking up user in database...');
-    console.log('Database name:', db.databaseName);
-    console.log('Collections:', await db.listCollections().toArray());
-    
-    // Try case-insensitive search
     const user = await db.collection('users').findOne({
       $or: [
         { username: { $regex: `^${username}$`, $options: 'i' } },
@@ -155,50 +193,63 @@ app.post('/api/login', async (req, res) => {
       ]
     });
     
-    console.log('User lookup result:', user ? 'User found' : 'User not found');
-    
     if (!user) {
       console.log('No user found with username/email:', username);
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid username/email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username/email or password'
       });
     }
-
+    
     console.log('User found, comparing passwords...');
     const isMatch = await bcrypt.compare(password, user.password);
     
     if (!isMatch) {
       console.log('Password does not match');
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid username or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username/email or password'
       });
     }
-
-    console.log('Login successful for user:', username);
-    // Remove password from user object before sending response
+    
+    // Remove password from user object
     const { password: _, ...userWithoutPassword } = user;
     
-    const response = { 
-      success: true, 
-      message: 'Login successful',
-      user: userWithoutPassword,
-      token: 'your-jwt-token-here' // In production, generate a real JWT token
+    console.log('Login successful for user:', user.username);
+    
+    // Ensure user object has required fields
+    const userResponse = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      name: user.name || '',
+      role: user.role || 'student',
+      ...userWithoutPassword
     };
     
-    console.log('Sending response:', JSON.stringify(response, null, 2));
-    res.json(response);
+    // Determine redirect URL based on user role
+    let redirectUrl = '/';
+    if (user.role === 'tutor') {
+      redirectUrl = '/tutor_dashboard.html';
+    } else if (user.role === 'student') {
+      redirectUrl = '/student_dashboard.html';
+    }
+    
+    res.json({
+      success: true,
+      message: 'Login successful',
+      user: userResponse,
+      token: 'your-jwt-token-here',
+      redirect: redirectUrl
+    });
     
   } catch (error) {
     console.error('❌ Login error:', error);
-    const errorResponse = { 
-      success: false, 
-      message: 'Server error during login',
+    res.status(500).json({
+      success: false,
+      message: 'Error during login',
       error: error.message
-    };
-    console.error('Error response:', errorResponse);
-    res.status(500).json(errorResponse);
+    });
   }
 });
 
@@ -273,6 +324,35 @@ app.post('/api/signup', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating user account',
+      error: error.message
+    });
+  }
+});
+
+// Get all users (admin only)
+app.get('/api/admin/users', async (req, res) => {
+  console.log('\n=== Fetching all users ===');
+  
+  try {
+    // In a real app, you would verify admin status here
+    // For now, we'll just return all users
+    const users = await db.collection('users').find({}).toArray();
+    
+    // Remove passwords from response
+    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+    
+    console.log(`Found ${usersWithoutPasswords.length} users`);
+    
+    res.json({
+      success: true,
+      users: usersWithoutPasswords
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
       error: error.message
     });
   }

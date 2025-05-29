@@ -63,9 +63,53 @@ document.addEventListener('DOMContentLoaded', function () {
   // Login form handling
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
+    loginForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-      // Login logic will be handled by the form's action
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorElement = document.getElementById('login-error');
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.user && data.user.username && data.user.role) {
+          // Store user data in localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('token', data.token || '');
+          localStorage.setItem('username', data.user.username);
+          
+          // Redirect based on user role
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else if (data.user.role === 'student') {
+            window.location.href = '/student_dashboard.html';
+          } else if (data.user.role === 'tutor') {
+            window.location.href = '/tutor_dashboard.html';
+          } else {
+            window.location.href = '/';
+          }
+        } else {
+          // Show error message
+          throw new Error(data.message || 'Incomplete user data received');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        if (errorElement) {
+          errorElement.textContent = 'An error occurred. Please try again.';
+          errorElement.style.display = 'block';
+        } else {
+          alert('An error occurred. Please try again.');
+        }
+      }
     });
   }
 

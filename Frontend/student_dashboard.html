@@ -416,7 +416,23 @@
       }
 
       // Call the function when the page loads
-      document.addEventListener('DOMContentLoaded', fetchAssignedTutor);
+      document.addEventListener('DOMContentLoaded', function() {
+        fetchAssignedTutor();
+        
+        // Add logout functionality
+        const logoutBtn = document.getElementById('logout');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Clear user data from localStorage
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            // Redirect to login page
+            window.location.href = 'login.html';
+          });
+        }
+      });
     </script>
   </div>
 
