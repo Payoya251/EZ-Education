@@ -81,13 +81,13 @@ document.addEventListener('DOMContentLoaded', function () {
         
         const data = await response.json();
         
-        if (data.success && data.user && data.user.username && data.user.role) {
+        if (data.success && data.user && data.user.username) {
           // Store user data in localStorage
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('token', data.token || '');
           localStorage.setItem('username', data.user.username);
           
-          // Redirect based on user role
+          // Use the redirect URL from server if provided, otherwise determine based on role
           if (data.redirect) {
             window.location.href = data.redirect;
           } else if (data.user.role === 'student') {
@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
           } else if (data.user.role === 'tutor') {
             window.location.href = '/tutor_dashboard.html';
           } else {
+            // Default redirect if no role matches
             window.location.href = '/';
           }
         } else {

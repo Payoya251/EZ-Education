@@ -459,31 +459,37 @@
         console.log('SessionStorage contents:', JSON.stringify(sessionStorage, null, 2));
         
         // Check if user is logged in and is a tutor
-        const username = localStorage.getItem('username');
-        const userType = localStorage.getItem('userType');
-        const tutorUsername = sessionStorage.getItem('tutorUsername');
+        const userData = localStorage.getItem('user');
+        let username, userRole;
         
-        console.log('Auth check:', { username, userType, tutorUsername });
-        
-        // If we have a tutor username in sessionStorage but not in localStorage, sync them
-        if (tutorUsername && (!username || !userType)) {
-            console.log('Found tutor in sessionStorage, syncing to localStorage');
-            localStorage.setItem('username', tutorUsername);
-            localStorage.setItem('userType', 'tutor');
-            window.location.reload();
-            return;
+        // Parse user data if it exists
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                username = user.username;
+                userRole = user.role;
+            } catch (e) {
+                console.error('Error parsing user data:', e);
+            }
         }
         
-        // If we don't have the required auth info, redirect to login
-        if (!username || userType !== 'tutor') {
+        const tutorUsername = sessionStorage.getItem('tutorUsername');
+        
+        console.log('Auth check:', { username, userRole, tutorUsername, userData });
+        
+        // If we're not authenticated as a tutor, redirect to login
+        if (!username || userRole !== 'tutor') {
             console.log('Not authenticated as tutor, redirecting to login');
-            // Clear any partial auth data
-            localStorage.removeItem('username');
-            localStorage.removeItem('userType');
+            // Clear any auth data
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
             sessionStorage.removeItem('tutorUsername');
             window.location.href = 'login.html';
             return;
         }
+        
+        // Store tutor username in sessionStorage for compatibility
+        sessionStorage.setItem('tutorUsername', username);
         
         // If we get here, we're properly authenticated as a tutor
         console.log('Authenticated as tutor:', username);
@@ -544,87 +550,92 @@
             studentsList.innerHTML = '';
             
             if (enrolledStudents.length === 0) {
-                studentsList.innerHTML = `
-                    <li>
-                        <div class="empty-list-message">
-                            No added students yet
-                        </div>
-                    </li>
-                `;
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-message';
+                emptyMessage.textContent = 'No hay estudiantes asignados aún.';
+                studentsList.appendChild(emptyMessage);
                 return;
             }
             
             enrolledStudents.forEach(student => {
-                // Ensure we're displaying the username string
-                const username = typeof student === 'object' ? student.username : student;
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <div class="student-item">
-                        <span>${username}</span>
-                        <button class="remove-student" data-student="${username}">
-                            Eliminar
-                        </button>
-                    </div>
-                `;
-                studentsList.appendChild(listItem);
-            });
-            
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.remove-student').forEach(button => {
-                button.addEventListener('click', function() {
-                    const studentToRemove = this.getAttribute('data-student');
-                    removeStudent(studentToRemove);
-                });
+                const studentItem = document.createElement('div');
+                studentItem.className = 'student-item';
+                
+                const studentInfo = document.createElement('div');
+                studentInfo.className = 'student-info';
+                
+                const studentName = document.createElement('div');
+                studentName.className = 'student-name';
+                studentName.textContent = student.name || student.username;
+                
+                const studentEmail = document.createElement('div');
+                studentEmail.className = 'student-email';
+                studentEmail.textContent = student.email || '';
+                
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-student';
+                removeButton.textContent = 'Eliminar';
+                removeButton.onclick = () => removeStudent(student.username);
+                
+                studentInfo.appendChild(studentName);
+                studentInfo.appendChild(studentEmail);
+                studentItem.appendChild(studentInfo);
+                studentItem.appendChild(removeButton);
+                studentsList.appendChild(studentItem);
             });
         }
 
         // Function to remove a student
         function removeStudent(studentUsername) {
-            const tutorUsername = sessionStorage.getItem('tutorUsername');
+            console.log('Attempting to remove student:', studentUsername);
             
-            // Clear previous errors
-            studentsErrors.style.display = 'none';
-            studentsErrors.textContent = '';
-            
-            if (!tutorUsername) {
-                showStudentsError('Error: No se pudo verificar tu sesión. Por favor, recarga la página.');
+            if (!studentUsername) {
+                console.error('No student username provided');
                 return;
             }
             
-            fetch('/api/remove-student', {
+            const tutorUsername = sessionStorage.getItem('tutorUsername');
+            
+            if (!tutorUsername) {
+                showStudentsError('Error: No se pudo verificar tu sesión. Redirigiendo...');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+            
+            // First, confirm with the user
+            if (!confirm(`¿Estás seguro de que deseas eliminar a ${studentUsername} de tu lista de estudiantes?`)) {
+                return;
+            }
+            
+            fetch(`/api/remove-student`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    tutorUsername: tutorUsername, 
-                    studentUsername: studentUsername 
-                }),
+                body: JSON.stringify({
+                    tutorUsername,
+                    studentUsername
+                })
             })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'Error al eliminar el estudiante');
-                    });
+                    throw new Error('Error al eliminar estudiante');
                 }
                 return response.json();
             })
             .then(data => {
-                if (data.success) {
-                    // Update local list
-                    enrolledStudents = enrolledStudents.filter(s => {
-                        const currentUsername = typeof s === 'object' ? s.username : s;
-                        return currentUsername !== studentUsername;
-                    });
+                if (data && data.success) {
+                    // Remove from local array and re-render
+                    enrolledStudents = enrolledStudents.filter(s => s.username !== studentUsername);
                     renderStudentList();
                     showStudentsSuccess('Estudiante eliminado correctamente');
                 } else {
-                    throw new Error(data.message || 'Error al eliminar el estudiante');
+                    throw new Error(data.message || 'Error al eliminar estudiante');
                 }
             })
             .catch(error => {
                 console.error('Error removing student:', error);
-                showStudentsError(error.message);
+                showStudentsError('Error al eliminar estudiante. Intenta de nuevo.');
             });
         }
 
@@ -654,33 +665,52 @@
             studentsErrors.textContent = '';
             
             if (!tutorUsername) {
-                showStudentsError('Error: No se pudo verificar tu sesión. Redirigiendo...');
+                const errorMsg = 'Error: No se pudo obtener el nombre de usuario del tutor';
+                console.error(errorMsg);
+                showStudentsError(errorMsg);
                 setTimeout(() => window.location.href = 'login.html', 2000);
                 return;
             }
             
-            fetch(`/api/tutor-students/${tutorUsername}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error al cargar estudiantes');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && Array.isArray(data.students)) {
-                        // Ensure we store just the usernames
-                        enrolledStudents = data.students.map(student => {
-                            return typeof student === 'object' ? student.username : student;
-                        });
-                        renderStudentList();
-                    } else {
-                        throw new Error('Formato de datos incorrecto');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching enrolled students:', error);
-                    showStudentsError('Error al cargar la lista de estudiantes. Intenta recargar la página.');
+            const apiUrl = `/api/tutor-students/${encodeURIComponent(tutorUsername)}`;
+            console.log('Fetching students from:', apiUrl);
+            
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'  // Important for including cookies/session
+            })
+            .then(async response => {
+                console.log('Response status:', response.status);
+                const responseData = await response.json().catch(e => ({}));
+                console.log('Response data:', responseData);
+                
+                if (!response.ok) {
+                    throw new Error(responseData.message || `HTTP error! status: ${response.status}`);
+                }
+                return responseData;
+            })
+            .then(data => {
+                console.log('Received students data:', data);
+                if (data && data.success && Array.isArray(data.students)) {
+                    // Store the student objects
+                    enrolledStudents = data.students;
+                    renderStudentList();
+                } else {
+                    throw new Error(data.message || 'Formato de datos incorrecto del servidor');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching enrolled students:', {
+                    error: error.message,
+                    tutorUsername,
+                    timestamp: new Date().toISOString()
                 });
+                showStudentsError('Error al cargar la lista de estudiantes. Por favor, recarga la página o intenta más tarde.');
+            });
         }
 
         // Event listener for enroll form submission
